@@ -98,6 +98,20 @@ services:
         sync: false
       - key: CHEAPERINFERENCE_API_KEY
         sync: false
+      # Keep model tiers and cost data fresh so auto/*:cheap selects the
+      # cheapest healthy model that still fits the requested capability/tier.
+      - key: PRICING_SYNC_ENABLED
+        value: "true"
+      - key: PRICING_SYNC_INTERVAL
+        value: "21600"
+      - key: PRICING_SYNC_SOURCES
+        value: litellm
+      - key: MODELS_DEV_SYNC_ENABLED
+        value: "true"
+      - key: MODELS_DEV_SYNC_INTERVAL
+        value: "21600"
+      - key: MODELS_CATALOG_PREFIX_MODE
+        value: dual
 
 databases:
   - name: omnigent-db

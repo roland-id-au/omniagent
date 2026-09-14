@@ -144,6 +144,33 @@ Then verify it with `omniroute providers list`. Starter is the lowest-cost
 bootstrap; move the route service to a larger Render plan if long coding-agent
 Responses calls cause restarts.
 
+## Tiered model routing
+
+The route service enables periodic pricing and model-capability sync. Use
+OmniRoute's `auto` channels when the caller wants a tier rather than one exact
+provider:
+
+| Request model | Behavior |
+|---|---|
+| `auto/coding:cheap` | Cheapest healthy coding-capable candidate |
+| `auto/reasoning:pro` | A premium reasoning-capable candidate, selected by fit and health |
+| `auto/chat:cheap` | Cheapest healthy chat-capable candidate |
+| `auto/vision:cheap` | Cheapest healthy vision-capable candidate |
+
+The `cheap` tier uses cost as its strongest routing signal, but still filters
+for capability and excludes unhealthy or unavailable connections. The pricing
+catalog is refreshed every six hours. Native models remain addressable by
+their actual provider-qualified IDs, such as `deepseek/deepseek-chat` or
+`openai/gpt-5.6`; the dashboard advertises both short and canonical prefixes.
+
+For a semantic alias such as `astra`, define an explicit combo or model→combo
+mapping after the live provider catalogs are available. OmniRoute cannot safely
+assume that a similarly named model is an equivalent, and the equivalent may
+change by capability or context window. For example, a deliberately authored
+`astra-cheap` combo can target the approved DeepSeek model plus fallbacks and
+use the `cost-optimized` or `auto` strategy. This preserves exact native model
+names while making the equivalence policy auditable.
+
 ## Upgrading
 
 Render redeploys automatically when a new commit lands on the connected branch
