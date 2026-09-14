@@ -1,22 +1,20 @@
-# Render blueprint: web service (pulls the CI image — it ships the gitignored
-# web UI bundle a source build can't) + managed Postgres + data disk.
+# Render blueprint: one combined OmniAgent + OmniRoute web service, managed
+# Postgres, and a persistent data disk.
 # Defaults to built-in `accounts` auth (multi-user, no IdP). Full walkthrough:
 # deploy/render/README.md.
 
 services:
   - type: web
-    name: ds-oa-gateway-7k4m2q9v
-    runtime: image
-    image:
-      url: ghcr.io/omnigent-ai/omnigent-server:latest
-      # While the package is private, add image.creds.fromRegistryCreds (a GHCR
-      # read:packages token registered in the Render dashboard). Drop once public.
+    name: ds-oa-omni-7k4m2q9v
+    runtime: docker
+    dockerfilePath: deploy/render/Dockerfile.combined
+    dockerContext: .
     plan: starter
     domains:
-      - omniagent.drksci.com
+      - omniroute.drksci.com
     healthCheckPath: /health
     disk:
-      name: artifact-data
+      name: omni-data
       mountPath: /data
       sizeGB: 10
     envVars:
@@ -26,66 +24,20 @@ services:
           property: connectionString
       - key: ARTIFACT_DIR
         value: /data/artifacts
-      # Anchor the server's data dir on the persistent disk (this path's
-      # parent, /data) so file-backed operator config and the auto-minted
-      # cookie secret survive redeploys. No credentials file is written here.
       - key: OMNIGENT_ADMIN_CREDENTIALS_PATH
         value: /data/admin-credentials
-      - key: HOST
-        value: 0.0.0.0
-      # Comma-separated deployment-wide release features; empty is all off.
-      - key: OMNIGENT_FEATURES
-        value: ""
+      - key: OMNIGENT_ACCOUNTS_BASE_URL
+        value: https://omniroute.drksci.com
       - key: OMNIGENT_AUTH_PROVIDER
         value: accounts
       - key: OMNIGENT_ACCOUNTS_AUTO_OPEN
         value: "0"
       - key: OMNIGENT_ACCOUNTS_INIT_ADMIN_PASSWORD
         sync: false
-      - key: OMNIGENT_ACCOUNTS_BASE_URL
-        value: https://omniagent.drksci.com
-      #
-      # To use your own IdP instead of built-in accounts, set
-      # OMNIGENT_AUTH_PROVIDER=oidc and add the OMNIGENT_OIDC_* vars
-      # (including OMNIGENT_OIDC_COOKIE_SECRET = `openssl rand -hex 32`) in the
-      # Render dashboard. See deploy/render/README.md.
-
-  - type: worker
-    name: ds-oa-host-7k4m2q9v
-    runtime: docker
-    dockerfilePath: deploy/render/Dockerfile.host
-    dockerContext: .
-    plan: starter
-    disk:
-      name: host-data
-      mountPath: /data
-      sizeGB: 10
-    envVars:
-      - key: HOME
-        value: /data/home
-      - key: OMNIGENT_SERVER_URL
-        value: https://omniagent.drksci.com
-      - key: OMNIROUTE_BASE_URL
-        value: https://ds-oa-route-7k4m2q9v.onrender.com/v1
       - key: OMNIROUTE_API_KEY
         sync: false
-
-  - type: web
-    name: ds-oa-route-7k4m2q9v
-    runtime: image
-    image:
-      url: diegosouzapw/omniroute:3.8.51
-    plan: starter
-    healthCheckPath: /api/monitoring/health
-    disk:
-      name: route-data
-      mountPath: /app/data
-      sizeGB: 10
-    envVars:
-      - key: PORT
-        value: "20128"
-      - key: DATA_DIR
-        value: /app/data
+      - key: CHEAPERINFERENCE_API_KEY
+        sync: false
       - key: REQUIRE_API_KEY
         value: "true"
       - key: AUTH_COOKIE_SECURE
@@ -96,10 +48,6 @@ services:
         sync: false
       - key: INITIAL_PASSWORD
         sync: false
-      - key: CHEAPERINFERENCE_API_KEY
-        sync: false
-      # Keep model tiers and cost data fresh so auto/*:cheap selects the
-      # cheapest healthy model that still fits the requested capability/tier.
       - key: PRICING_SYNC_ENABLED
         value: "true"
       - key: PRICING_SYNC_INTERVAL

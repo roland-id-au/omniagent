@@ -1,0 +1,31 @@
+FROM node:22-slim AS node-runtime
+
+FROM ghcr.io/omnigent-ai/omnigent-server:latest
+
+COPY --from=node-runtime /usr/local/ /usr/local/
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nginx git tmux procps lsof bubblewrap curl ca-certificates unzip \
+    && npm install -g --no-audit --no-fund omniroute@3.8.51 @deepseek-ai/dsh @openai/codex @anthropic-ai/claude-code \
+    && npm cache clean --force \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY deploy/render/nginx-combined.conf /etc/nginx/nginx.conf
+COPY deploy/render/combined-entrypoint.sh /usr/local/bin/omnigent-combined
+COPY deploy/render/phase-launch.sh /usr/local/bin/omni-phase
+RUN chmod 0755 /usr/local/bin/omnigent-combined /usr/local/bin/omni-phase \
+    && mkdir -p /data/home /data/artifacts /data/omniroute
+
+ENV HOME=/data/home \
+    PORT=10000 \
+    OMNIGENT_HOST=127.0.0.1 \
+    OMNIGENT_PORT=8000 \
+    OMNIROUTE_HOST=127.0.0.1 \
+    OMNIROUTE_PORT=20128 \
+    OMNIROUTE_BASE_PATH=/router \
+    DATA_DIR=/data/omniroute \
+    OMNIROUTE_MEMORY_MB=1024 \
+    NODE_OPTIONS=--max-old-space-size=1024
+
+EXPOSE 10000
+ENTRYPOINT ["/usr/local/bin/omnigent-combined"]

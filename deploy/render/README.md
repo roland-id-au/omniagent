@@ -17,18 +17,23 @@ The `render.yaml` blueprint at the repo root defines:
 
 - **omnigent** (Starter web service) — pulls the pre-built image
   `ghcr.io/omnigent-ai/omnigent-server:latest` (CI-built; ships the web UI
-  bundle), served on `https://omnigent-<hash>.onrender.com`. While the GHCR
-  package is private, add a Render registry credential and reference it from
-  `render.yaml` (`image.creds`); once public, the pull is anonymous.
+  bundle), served on `https://omniroute.drksci.com`. The combined image pulls
+  the OmniAgent server image and installs the pinned OmniRoute runtime.
 - **omnigent-db** (`basic-256mb` managed Postgres) — `DATABASE_URL` is injected
   into the service automatically
 - **artifact-data** (10 GB persistent disk) — mounted at `/data` so server
   config, the auto-minted cookie secret, and agent artifacts survive redeploys.
   Artifacts live under `/data/artifacts`. (Account rows and password hashes
   live in the managed Postgres, not on the disk.)
-- **ds-oa-route-7k4m2q9v** (Starter web service) — pinned OmniRoute
-  `3.8.51`, with a 10 GB persistent disk at `/app/data`. It fronts the
-  openai-compatible harness traffic and is protected by an inference key.
+- **ds-oa-omni-7k4m2q9v** (Starter web service) — one combined image running
+  OmniAgent on internal port 8000 and OmniRoute `3.8.51` on internal port
+  20128. Nginx exposes one HTTPS listener and publishes OmniRoute under
+  `/router/`.
+
+Public paths are `https://omniroute.drksci.com/` for OmniAgent and
+`https://omniroute.drksci.com/router/` for OmniRoute. The application and
+router ports are loopback-only inside the container; only Nginx's public port
+is exposed.
 
 ## Quickstart (built-in accounts — the default)
 
@@ -64,9 +69,9 @@ automatically by Render.
 ### GitHub OAuth (simplest to register)
 
 1. Go to `github.com/settings/developers` → **New OAuth App**.
-   - Homepage URL: `https://omnigent-<hash>.onrender.com`
+   - Homepage URL: `https://omniroute.drksci.com`
    - Authorization callback URL:
-     `https://omnigent-<hash>.onrender.com/auth/callback`
+     `https://omniroute.drksci.com/auth/callback`
    - Click **Register application**, then **Generate a new client secret**.
 
 2. In the Render dashboard, open the **omnigent** service → **Environment**
@@ -78,7 +83,7 @@ automatically by Render.
    | `OMNIGENT_OIDC_ISSUER` | `https://github.com` |
    | `OMNIGENT_OIDC_CLIENT_ID` | your GitHub OAuth client ID |
    | `OMNIGENT_OIDC_CLIENT_SECRET` | your GitHub OAuth client secret |
-   | `OMNIGENT_OIDC_REDIRECT_URI` | `https://omnigent-<hash>.onrender.com/auth/callback` |
+   | `OMNIGENT_OIDC_REDIRECT_URI` | `https://omniroute.drksci.com/auth/callback` |
 
    Also add `OMNIGENT_OIDC_COOKIE_SECRET` = a 64-hex-char value from
    `openssl rand -hex 32` — OIDC mode requires it and validates it as hex.
@@ -94,7 +99,7 @@ automatically by Render.
 | `OMNIGENT_OIDC_ISSUER` | `https://accounts.google.com` |
 | `OMNIGENT_OIDC_CLIENT_ID` | `…apps.googleusercontent.com` |
 | `OMNIGENT_OIDC_CLIENT_SECRET` | your client secret |
-| `OMNIGENT_OIDC_REDIRECT_URI` | `https://omnigent-<hash>.onrender.com/auth/callback` |
+| `OMNIGENT_OIDC_REDIRECT_URI` | `https://omniroute.drksci.com/auth/callback` |
 | `OMNIGENT_OIDC_ALLOWED_DOMAINS` | `example.com` (critical — see note below) |
 
 > **Important:** Without `OMNIGENT_OIDC_ALLOWED_DOMAINS`, any Google account
@@ -119,16 +124,16 @@ propagates.
 ## OmniRoute and CheapInference
 
 The blueprint keeps the upstream provider credential separate from the key
-that the Omnigent worker uses to call OmniRoute:
+that the combined host uses to call OmniRoute:
 
-1. Set `CHEAPERINFERENCE_API_KEY` on `ds-oa-route-7k4m2q9v` to the `api_key`
+1. Set `CHEAPERINFERENCE_API_KEY` on `ds-oa-omni-7k4m2q9v` to the `api_key`
    value from `cheaper-inference-default.json`. It is a Render secret and is
    never committed to Git.
 2. Set `JWT_SECRET`, `API_KEY_SECRET`, and `INITIAL_PASSWORD` on that service
    to freshly generated secrets. After first boot, open its dashboard and
    create an OmniRoute inference key under **Endpoints**.
-3. Put that generated inference key in the worker's `OMNIROUTE_API_KEY`
-   secret. The worker config references the environment variable, so the key
+3. Put that generated inference key in the service's `OMNIROUTE_API_KEY`
+   secret. The combined host config references the environment variable, so the key
    is not written into the repository.
 
 Add the provider once OmniRoute is running, from its service shell:
@@ -141,12 +146,12 @@ omniroute providers add cheaperinference \
 ```
 
 Then verify it with `omniroute providers list`. Starter is the lowest-cost
-bootstrap; move the route service to a larger Render plan if long coding-agent
+bootstrap; move the combined service to a larger Render plan if long coding-agent
 Responses calls cause restarts.
 
 ## Tiered model routing
 
-The route service enables periodic pricing and model-capability sync. Use
+The combined service enables periodic pricing and model-capability sync. Use
 OmniRoute's `auto` channels when the caller wants a tier rather than one exact
 provider:
 
