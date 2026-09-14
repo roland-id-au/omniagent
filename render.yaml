@@ -65,6 +65,39 @@ services:
         value: /data/home
       - key: OMNIGENT_SERVER_URL
         value: https://omniagent.drksci.com
+      - key: OMNIROUTE_BASE_URL
+        value: https://ds-oa-route-7k4m2q9v.onrender.com/v1
+      - key: OMNIROUTE_API_KEY
+        sync: false
+
+  - type: web
+    name: ds-oa-route-7k4m2q9v
+    runtime: image
+    image:
+      url: diegosouzapw/omniroute:3.8.51
+    plan: starter
+    healthCheckPath: /api/monitoring/health
+    disk:
+      name: route-data
+      mountPath: /app/data
+      sizeGB: 10
+    envVars:
+      - key: PORT
+        value: "20128"
+      - key: DATA_DIR
+        value: /app/data
+      - key: REQUIRE_API_KEY
+        value: "true"
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: JWT_SECRET
+        sync: false
+      - key: API_KEY_SECRET
+        sync: false
+      - key: INITIAL_PASSWORD
+        sync: false
+      - key: CHEAPERINFERENCE_API_KEY
+        sync: false
 
 databases:
   - name: omnigent-db

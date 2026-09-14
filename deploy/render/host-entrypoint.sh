@@ -4,6 +4,21 @@ set -eu
 : "${OMNIGENT_SERVER_URL:?OMNIGENT_SERVER_URL is required}"
 mkdir -p "${HOME}/.omnigent"
 
+if [ -n "${OMNIROUTE_BASE_URL:-}" ] && [ -n "${OMNIROUTE_API_KEY:-}" ] \
+  && [ ! -f "${HOME}/.omnigent/config.yaml" ]; then
+  cat > "${HOME}/.omnigent/config.yaml" <<EOF
+providers:
+  omniroute:
+    kind: gateway
+    default: [openai]
+    openai:
+      base_url: ${OMNIROUTE_BASE_URL}
+      api_key_ref: env:OMNIROUTE_API_KEY
+      wire_api: responses
+EOF
+  chmod 0600 "${HOME}/.omnigent/config.yaml"
+fi
+
 until curl -fsS "${OMNIGENT_SERVER_URL%/}/health" >/dev/null; do
   sleep 5
 done

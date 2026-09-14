@@ -26,6 +26,9 @@ The `render.yaml` blueprint at the repo root defines:
   config, the auto-minted cookie secret, and agent artifacts survive redeploys.
   Artifacts live under `/data/artifacts`. (Account rows and password hashes
   live in the managed Postgres, not on the disk.)
+- **ds-oa-route-7k4m2q9v** (Starter web service) — pinned OmniRoute
+  `3.8.51`, with a 10 GB persistent disk at `/app/data`. It fronts the
+  openai-compatible harness traffic and is protected by an inference key.
 
 ## Quickstart (built-in accounts — the default)
 
@@ -112,6 +115,34 @@ Render-assigned address. Render provisions a Let's Encrypt cert automatically.
 
 Update `OMNIGENT_OIDC_REDIRECT_URI` to use the custom domain after DNS
 propagates.
+
+## OmniRoute and CheapInference
+
+The blueprint keeps the upstream provider credential separate from the key
+that the Omnigent worker uses to call OmniRoute:
+
+1. Set `CHEAPERINFERENCE_API_KEY` on `ds-oa-route-7k4m2q9v` to the `api_key`
+   value from `cheaper-inference-default.json`. It is a Render secret and is
+   never committed to Git.
+2. Set `JWT_SECRET`, `API_KEY_SECRET`, and `INITIAL_PASSWORD` on that service
+   to freshly generated secrets. After first boot, open its dashboard and
+   create an OmniRoute inference key under **Endpoints**.
+3. Put that generated inference key in the worker's `OMNIROUTE_API_KEY`
+   secret. The worker config references the environment variable, so the key
+   is not written into the repository.
+
+Add the provider once OmniRoute is running, from its service shell:
+
+```sh
+omniroute providers add cheaperinference \
+  --name cheap-default \
+  --credential-env CHEAPERINFERENCE_API_KEY \
+  --yes
+```
+
+Then verify it with `omniroute providers list`. Starter is the lowest-cost
+bootstrap; move the route service to a larger Render plan if long coding-agent
+Responses calls cause restarts.
 
 ## Upgrading
 
