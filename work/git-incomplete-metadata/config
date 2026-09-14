@@ -1,0 +1,11 @@
+[core]
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	ignorecase = false
+	precomposeunicode = true
+	repositoryformatversion = 0
+[gitbutler "project"]
+	portedMeta = true
+[remote "gb-local"]
+	url = /Users/blake/Documents/Codex/2026-09-15/mak

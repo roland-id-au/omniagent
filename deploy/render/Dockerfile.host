@@ -1,0 +1,6 @@
+FROM ghcr.io/omnigent-ai/omnigent-host:latest
+
+COPY deploy/render/host-entrypoint.sh /usr/local/bin/omnigent-render-host
+RUN chmod 0755 /usr/local/bin/omnigent-render-host
+
+ENTRYPOINT ["/usr/local/bin/omnigent-render-host"]
