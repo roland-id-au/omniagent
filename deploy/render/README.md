@@ -171,6 +171,25 @@ change by capability or context window. For example, a deliberately authored
 use the `cost-optimized` or `auto` strategy. This preserves exact native model
 names while making the equivalence policy auditable.
 
+### Coding phases
+
+Coding traffic should use a phase as well as a tier. The client or harness can
+apply this policy with the model channel and optional request header:
+
+| Phase | Model channel | Mode | Intent |
+|---|---|---|---|
+| Plan | `auto/reasoning:pro` | `quality` | Strong reasoning and architecture before edits |
+| Work | `auto/coding:cheap` | `cheap` | Cheapest healthy coding-capable equivalent |
+| Review | `auto/coding:pro` | `quality` | Higher-quality coding/review candidate |
+| Quick fix | `auto/coding:fast` | `fast` | Low-latency implementation loop |
+
+The mode is sent as `X-OmniRoute-Mode`. For example, an implementation call
+uses `model: auto/coding:cheap` and `X-OmniRoute-Mode: cheap`; a planning call
+uses `model: auto/reasoning:pro` and `X-OmniRoute-Mode: quality`. The channel
+filters the candidate pool, while the mode controls the selection bias within
+that pool. This gives “cheapest applicable model for this phase,” rather than
+selecting the globally cheapest model regardless of capability.
+
 ## Upgrading
 
 Render redeploys automatically when a new commit lands on the connected branch
