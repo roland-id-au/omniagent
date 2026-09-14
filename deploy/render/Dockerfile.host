@@ -4,6 +4,7 @@ RUN npm install -g --no-audit --no-fund @deepseek-ai/dsh \
     && npm cache clean --force
 
 COPY deploy/render/host-entrypoint.sh /usr/local/bin/omnigent-render-host
-RUN chmod 0755 /usr/local/bin/omnigent-render-host
+COPY deploy/render/phase-launch.sh /usr/local/bin/omni-phase
+RUN chmod 0755 /usr/local/bin/omnigent-render-host /usr/local/bin/omni-phase
 
 ENTRYPOINT ["/usr/local/bin/omnigent-render-host"]

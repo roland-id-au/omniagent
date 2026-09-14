@@ -190,6 +190,21 @@ filters the candidate pool, while the mode controls the selection bias within
 that pool. This gives “cheapest applicable model for this phase,” rather than
 selecting the globally cheapest model regardless of capability.
 
+The Render host also installs `omni-phase`, which applies the phase model at
+launch time:
+
+```sh
+omni-phase plan codex       # heavy reasoning for architecture/planning
+omni-phase work codex       # light, cheap coding model
+omni-phase review claude    # quality-biased review model
+omni-phase quick-fix agy    # fast implementation loop
+```
+
+The phase defaults can be overridden with `OMNIROUTE_PLAN_MODEL`,
+`OMNIROUTE_WORK_MODEL`, `OMNIROUTE_REVIEW_MODEL`, and
+`OMNIROUTE_QUICK_FIX_MODEL`. An explicit native `provider/model` supplied to
+the regular `omnigent` command is never rewritten by this helper.
+
 ## Upgrading
 
 Render redeploys automatically when a new commit lands on the connected branch
