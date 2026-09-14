@@ -16,8 +16,8 @@ The `render.yaml` blueprint at the repo root defines:
 
 - **ds-oa-omni-7k4m2q9v** (Free web service) — one combined image running
   OmniAgent on internal port 8000 and OmniRoute `3.8.51` on internal port
-  20128. Nginx exposes one HTTPS listener and publishes OmniRoute under
-  `/router/`. OmniAgent uses SQLite at `/data/omnigent.db` and all `/data`
+  20128. Nginx exposes one HTTPS listener and publishes OmniRoute `3.8.50`
+  under `/router/`. OmniAgent uses SQLite at `/data/omnigent.db` and all `/data`
   contents are ephemeral on the free plan.
 
 Public paths are `https://omniroute.drksci.com/` for OmniAgent and

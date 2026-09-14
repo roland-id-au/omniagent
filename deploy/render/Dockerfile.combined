@@ -6,7 +6,7 @@ COPY --from=node-runtime /usr/local/ /usr/local/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx git tmux procps lsof bubblewrap curl ca-certificates unzip \
-    && npm install -g --no-audit --no-fund omniroute@3.8.51 @deepseek-ai/dsh @openai/codex @anthropic-ai/claude-code \
+    && npm install -g --no-audit --no-fund omniroute@3.8.50 @deepseek-ai/dsh @openai/codex @anthropic-ai/claude-code \
     && npm cache clean --force \
     && rm -rf /var/lib/apt/lists/*
 
