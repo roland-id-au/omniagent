@@ -1,5 +1,8 @@
 FROM ghcr.io/omnigent-ai/omnigent-host:latest
 
+RUN npm install -g --no-audit --no-fund @deepseek-ai/dsh \
+    && npm cache clean --force
+
 COPY deploy/render/host-entrypoint.sh /usr/local/bin/omnigent-render-host
 RUN chmod 0755 /usr/local/bin/omnigent-render-host
 
