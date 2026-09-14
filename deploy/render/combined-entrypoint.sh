@@ -19,8 +19,6 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-until curl -fsS http://127.0.0.1:8000/health >/dev/null; do sleep 5; done
-
 if [ -n "${OMNIROUTE_API_KEY:-}" ] && [ ! -f "$HOME/.omnigent/config.yaml" ]; then
   cat > "$HOME/.omnigent/config.yaml" <<EOF
 providers:
@@ -35,16 +33,20 @@ EOF
   chmod 0600 "$HOME/.omnigent/config.yaml"
 fi
 
-until [ -f "$HOME/.omnigent/auth_tokens.json" ]; do
-  echo "Combined host waiting for interactive login. Run in the service shell:" >&2
-  echo "  omnigent login http://127.0.0.1:8000" >&2
-  echo "  claude" >&2
-  echo "  codex" >&2
-  echo "  agy" >&2
-  sleep 30
-done
+start_host_when_ready() {
+  until curl -fsS http://127.0.0.1:8000/health >/dev/null; do sleep 5; done
+  until [ -f "$HOME/.omnigent/auth_tokens.json" ]; do
+    echo "Combined host waiting for interactive login. Run in the service shell:" >&2
+    echo "  omnigent login http://127.0.0.1:8000" >&2
+    echo "  claude" >&2
+    echo "  codex" >&2
+    echo "  agy" >&2
+    sleep 30
+  done
+  omnigent host --server http://127.0.0.1:8000 --non-interactive
+}
 
-omnigent host --server http://127.0.0.1:8000 --non-interactive &
+start_host_when_ready &
 host_pid=$!
 
 exec nginx -g 'daemon off;'
