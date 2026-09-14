@@ -5,13 +5,15 @@
 
 services:
   - type: web
-    name: omnigent
+    name: ds-oa-gateway-7k4m2q9v
     runtime: image
     image:
       url: ghcr.io/omnigent-ai/omnigent-server:latest
       # While the package is private, add image.creds.fromRegistryCreds (a GHCR
       # read:packages token registered in the Render dashboard). Drop once public.
     plan: starter
+    domains:
+      - omniagent.drksci.com
     healthCheckPath: /health
     disk:
       name: artifact-data
@@ -40,10 +42,8 @@ services:
         value: "0"
       - key: OMNIGENT_ACCOUNTS_INIT_ADMIN_PASSWORD
         sync: false
-      # No COOKIE_SECRET or BASE_URL here: the entrypoint mints a hex cookie
-      # secret on the disk and auto-detects the public URL from RENDER_EXTERNAL_URL.
-      # (Render's generateValue isn't hex, which the server's bytes.fromhex rejects.)
-      # So this blueprint deploys with zero prompts — true 1-click.
+      - key: OMNIGENT_ACCOUNTS_BASE_URL
+        value: https://omniagent.drksci.com
       #
       # To use your own IdP instead of built-in accounts, set
       # OMNIGENT_AUTH_PROVIDER=oidc and add the OMNIGENT_OIDC_* vars
@@ -51,7 +51,7 @@ services:
       # Render dashboard. See deploy/render/README.md.
 
   - type: worker
-    name: omnigent-host
+    name: ds-oa-host-7k4m2q9v
     runtime: docker
     dockerfilePath: deploy/render/Dockerfile.host
     dockerContext: .
@@ -64,7 +64,7 @@ services:
       - key: HOME
         value: /data/home
       - key: OMNIGENT_SERVER_URL
-        value: https://omnigent.onrender.com
+        value: https://omniagent.drksci.com
 
 databases:
   - name: omnigent-db
