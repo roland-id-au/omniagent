@@ -1,5 +1,4 @@
-# Render blueprint: one combined OmniAgent + OmniRoute web service, managed
-# Postgres, and a persistent data disk.
+# Render blueprint: one combined OmniAgent + OmniRoute free web service.
 # Defaults to built-in `accounts` auth (multi-user, no IdP). Full walkthrough:
 # deploy/render/README.md.
 
@@ -9,19 +8,13 @@ services:
     runtime: docker
     dockerfilePath: deploy/render/Dockerfile.combined
     dockerContext: .
-    plan: starter
+    plan: free
     domains:
       - omniroute.drksci.com
     healthCheckPath: /health
-    disk:
-      name: omni-data
-      mountPath: /data
-      sizeGB: 10
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: omnigent-db
-          property: connectionString
+        value: sqlite:////data/omnigent.db
       - key: ARTIFACT_DIR
         value: /data/artifacts
       - key: OMNIGENT_ADMIN_CREDENTIALS_PATH
@@ -60,9 +53,3 @@ services:
         value: "21600"
       - key: MODELS_CATALOG_PREFIX_MODE
         value: dual
-
-databases:
-  - name: omnigent-db
-    plan: basic-256mb
-    databaseName: omnigent
-    user: omnigent

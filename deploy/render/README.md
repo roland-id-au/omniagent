@@ -1,8 +1,7 @@
 # Omnigent on Render
 
-Deploy Omnigent to Render in one click. Render provisions the app and a
-managed Postgres database, assigns an HTTPS URL on `*.onrender.com`, and
-handles SSL automatically. No local tooling required.
+Deploy Omnigent to Render as one free web service. The service bundles
+OmniAgent, OmniRoute, and Nginx, and handles SSL automatically.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/omnigent-ai/omnigent)
 
@@ -15,20 +14,11 @@ handles SSL automatically. No local tooling required.
 
 The `render.yaml` blueprint at the repo root defines:
 
-- **omnigent** (Starter web service) — pulls the pre-built image
-  `ghcr.io/omnigent-ai/omnigent-server:latest` (CI-built; ships the web UI
-  bundle), served on `https://omniroute.drksci.com`. The combined image pulls
-  the OmniAgent server image and installs the pinned OmniRoute runtime.
-- **omnigent-db** (`basic-256mb` managed Postgres) — `DATABASE_URL` is injected
-  into the service automatically
-- **artifact-data** (10 GB persistent disk) — mounted at `/data` so server
-  config, the auto-minted cookie secret, and agent artifacts survive redeploys.
-  Artifacts live under `/data/artifacts`. (Account rows and password hashes
-  live in the managed Postgres, not on the disk.)
-- **ds-oa-omni-7k4m2q9v** (Starter web service) — one combined image running
+- **ds-oa-omni-7k4m2q9v** (Free web service) — one combined image running
   OmniAgent on internal port 8000 and OmniRoute `3.8.51` on internal port
   20128. Nginx exposes one HTTPS listener and publishes OmniRoute under
-  `/router/`.
+  `/router/`. OmniAgent uses SQLite at `/data/omnigent.db` and all `/data`
+  contents are ephemeral on the free plan.
 
 Public paths are `https://omniroute.drksci.com/` for OmniAgent and
 `https://omniroute.drksci.com/router/` for OmniRoute. The application and
@@ -41,8 +31,9 @@ The blueprint defaults to the built-in `accounts` auth provider: multi-user
 out of the box, no external IdP, and **no env vars to fill in** — the server
 mints its own cookie secret and auto-detects its public URL from Render.
 
-1. Click the Deploy to Render button above → **Apply**. Wait ~3–5 min for the
-   image pull + health check.
+1. Click the Deploy to Render button above → **Apply**. Select the
+   `deploy/roland-id-au-omniagent` branch if Render asks. Wait for the image
+   build and health check.
 2. **Create the first admin.** No credentials are auto-generated. Open your
    `https://<service>.onrender.com` URL — a fresh instance shows a
    Create-admin form where you pick your own username + password. (First-boot
@@ -209,6 +200,14 @@ The phase defaults can be overridden with `OMNIROUTE_PLAN_MODEL`,
 `OMNIROUTE_WORK_MODEL`, `OMNIROUTE_REVIEW_MODEL`, and
 `OMNIROUTE_QUICK_FIX_MODEL`. An explicit native `provider/model` supplied to
 the regular `omnigent` command is never rewritten by this helper.
+
+## Free-plan limitations
+
+Render's free web service sleeps after inactivity and has ephemeral storage.
+The SQLite database, CLI login tokens, provider configuration, and artifacts
+must therefore be recreated after a restart or redeploy. This blueprint has
+no managed database and no paid disk by design. Add an external free Postgres
+and object store later if persistence becomes necessary.
 
 ## Upgrading
 
