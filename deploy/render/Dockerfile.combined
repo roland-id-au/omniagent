@@ -6,6 +6,7 @@ COPY --from=node-runtime /usr/local/ /usr/local/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx git tmux procps lsof bubblewrap curl ca-certificates unzip \
+    && python -m pip install --no-cache-dir boto3 \
     && npm install -g --no-audit --no-fund omniroute@3.8.50 @deepseek-ai/dsh @openai/codex @anthropic-ai/claude-code \
     && npm cache clean --force \
     && rm -rf /var/lib/apt/lists/*
@@ -13,7 +14,9 @@ RUN apt-get update \
 COPY deploy/render/nginx-combined.conf /etc/nginx/nginx.conf
 COPY deploy/render/combined-entrypoint.sh /usr/local/bin/omnigent-combined
 COPY deploy/render/phase-launch.sh /usr/local/bin/omni-phase
+COPY deploy/render/state-backup.py /usr/local/bin/omni-state-backup
 RUN chmod 0755 /usr/local/bin/omnigent-combined /usr/local/bin/omni-phase \
+    /usr/local/bin/omni-state-backup \
     && mkdir -p /data/home /data/artifacts /data/omniroute
 
 ENV HOME=/data/home \

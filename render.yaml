@@ -53,3 +53,18 @@ services:
         value: "21600"
       - key: MODELS_CATALOG_PREFIX_MODE
         value: dual
+      # Optional S3-compatible snapshot storage (Cloudflare R2 works here).
+      - key: STATE_BACKUP_S3_ENDPOINT
+        sync: false
+      - key: STATE_BACKUP_S3_BUCKET
+        sync: false
+      - key: STATE_BACKUP_S3_KEY
+        value: omnigent/omnigent.db
+      - key: STATE_BACKUP_S3_REGION
+        value: auto
+      - key: STATE_BACKUP_ACCESS_KEY_ID
+        sync: false
+      - key: STATE_BACKUP_SECRET_ACCESS_KEY
+        sync: false
+      - key: STATE_BACKUP_INTERVAL_SEC
+        value: "300"

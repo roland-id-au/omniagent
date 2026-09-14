@@ -3,6 +3,9 @@ set -eu
 
 mkdir -p "$HOME/.omnigent" /data/artifacts /data/omniroute
 
+python /usr/local/bin/omni-state-backup &
+backup_pid=$!
+
 PORT=8000 HOST=127.0.0.1 python /app/entrypoint.py &
 server_pid=$!
 
@@ -12,7 +15,7 @@ PORT=20128 HOSTNAME=127.0.0.1 OMNIROUTE_BASE_PATH=/router \
 router_pid=$!
 
 cleanup() {
-  kill "$server_pid" "$router_pid" 2>/dev/null || true
+  kill "$server_pid" "$router_pid" "$backup_pid" 2>/dev/null || true
 }
 trap cleanup INT TERM EXIT
 
