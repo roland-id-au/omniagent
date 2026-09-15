@@ -28,7 +28,7 @@ ENV HOME=/data/home \
     OMNIROUTE_BASE_PATH=/router \
     DATA_DIR=/data/omniroute \
     OMNIROUTE_MEMORY_MB=1024 \
-    NODE_OPTIONS=--max-old-space-size=1024
+    NODE_OPTIONS=--max-old-space-size=256
 
 EXPOSE 10000
 ENTRYPOINT ["/usr/local/bin/omnigent-combined"]

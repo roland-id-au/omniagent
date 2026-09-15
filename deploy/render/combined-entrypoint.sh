@@ -9,11 +9,6 @@ backup_pid=$!
 PORT=8000 HOST=127.0.0.1 python /app/entrypoint.py &
 server_pid=$!
 
-PORT=20128 HOSTNAME=127.0.0.1 OMNIROUTE_BASE_PATH=/router \
-  NEXT_PUBLIC_BASE_URL=https://omniroute.drksci.com/router DATA_DIR=/data/omniroute \
-  omniroute &
-router_pid=$!
-
 cleanup() {
   kill "$server_pid" "$router_pid" "$backup_pid" 2>/dev/null || true
 }
@@ -32,6 +27,17 @@ providers:
 EOF
   chmod 0600 "$HOME/.omnigent/config.yaml"
 fi
+
+router_pid=""
+start_router_when_ready() {
+  until curl -fsS http://127.0.0.1:8000/health >/dev/null; do sleep 5; done
+  PORT=20128 HOSTNAME=127.0.0.1 OMNIROUTE_BASE_PATH=/router \
+    NEXT_PUBLIC_BASE_URL=https://omniroute.drksci.com/router DATA_DIR=/data/omniroute \
+    omniroute &
+  router_pid=$!
+}
+
+start_router_when_ready &
 
 start_host_when_ready() {
   until curl -fsS http://127.0.0.1:8000/health >/dev/null; do sleep 5; done
